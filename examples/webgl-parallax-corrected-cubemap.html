@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>three.js webgl - loaders - OBJ MTL loader</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        font-family: Monospace;
+        background-color: #000;
+        color: #fff;
+        margin: 0px;
+        overflow: hidden;
+      }
+      #info {
+        color: #fff;
+        position: absolute;
+        top: 10px;
+        width: 100%;
+        text-align: center;
+        z-index: 100;
+        display:block;
+      }
+      #info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+    </style>
+  </head>
+
+  <body>
+    <div id="info">
+    <a href="http://threejs.org" target="_blank">three.js</a> - parallax corrected cubemap
+    </div>
+
+    <script src="../build/three.js"></script>
+
+    <script src="js/loaders/MTLLoader.js"></script>
+    <script src="js/loaders/OBJMTLLoader.js"></script>
+    <script src="js/controls/OrbitControls.js"></script>
+    <script src="js/Detector.js"></script>
+    <script src="js/libs/stats.min.js"></script>
+
+    <script>
+
+      var container, stats;
+
+      var camera, scene, renderer, controls;
+
+      init();
+      animate();
+
+
+      function init() {
+
+        container = document.createElement( 'div' );
+        document.body.appendChild( container );
+
+        camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+        camera.position.set(8, 8, 8);
+        camera.lookAt(new THREE.Vector3(0, 0, 0))
+
+       controls = new THREE.OrbitControls(camera);
+
+        // scene
+
+        scene = new THREE.Scene();
+
+        var ambient = new THREE.AmbientLight( 0x444444 );
+        scene.add( ambient );
+
+        var directionalLight = new THREE.DirectionalLight( 0xffeedd );
+        directionalLight.position.set( 0, 0, 1 ).normalize();
+        scene.add( directionalLight );
+
+        // model
+
+        var onProgress = function ( xhr ) {
+          if ( xhr.lengthComputable ) {
+            var percentComplete = xhr.loaded / xhr.total * 100;
+            console.log( Math.round(percentComplete, 2) + '% downloaded' );
+          }
+        };
+
+        var onError = function ( xhr ) {
+        };
+
+        var path = "textures/blurred/";
+
+        var format = '.png';
+
+        var urls = [path + 'posx' + format, path + 'negx' + format, path + 'posy' + format, path + 'negy' + format, path + 'posz' + format, path + 'negz' + format];
+
+        var blurredCube = THREE.ImageUtils.loadTextureCube(urls);
+
+        var roomTexture = THREE.ImageUtils.loadTexture("textures/room_lm.png");
+
+        var pillarTexture = THREE.ImageUtils.loadTexture("textures/pillar_map.png");
+
+        roomTexture.wrapS = THREE.RepeatWrapping;
+
+        roomTexture.wrapT = THREE.RepeatWrapping;
+
+        roomTexture.repeat.set(16, 16);
+
+        var cubeMaterial = new THREE.MeshPhongMaterial({
+          map: roomTexture,
+          envMap: blurredCube,
+          reflectivity: 0.6,
+          side: THREE.DoubleSide
+        });
+
+        cubeMaterial.useParallaxCorrection = true;
+        cubeMaterial.cubeSize = new THREE.Vector3(16, 16, 16);
+        cubeMaterial.cubePos = new THREE.Vector3(0, 2, 0);
+
+        var sphereMaterial = cubeMaterial.clone();
+        sphereMaterial.side = THREE.BackSide
+        var sphere = new THREE.Mesh(new THREE.SphereGeometry( 1, 32, 32 ), sphereMaterial);
+        sphere.position.set(0, 2, 0)
+        scene.add(sphere);
+
+        var loader = new THREE.OBJMTLLoader();
+        loader.load("obj/room.obj", "obj/room.mtl", function(o) {
+          o.traverse(function(child) {
+            if (child.material) {
+              return child.material = cubeMaterial;
+            }
+          });
+          return scene.add(o);
+        }, onProgress, onError);
+
+        loader.load("obj/pillars.obj", "obj/pillars.mtl", function(o) {
+          o.traverse(function(child) {
+            if (child.material) {
+              child.material = new THREE.MeshPhongMaterial({
+                map: pillarTexture
+              });
+              return child.material.needsUpdate = true;
+            }
+          });
+          return scene.add(o);
+        }, onProgress, onError);
+        //
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setClearColor(0xffeedd);
+        container.appendChild( renderer.domElement );
+        //
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+      }
+
+      function onWindowResize() {
+
+        windowHalfX = window.innerWidth / 2;
+        windowHalfY = window.innerHeight / 2;
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+
+      }
+
+      //
+
+      function animate() {
+
+        requestAnimationFrame( animate );
+        controls.update();
+        render();
+
+      }
+
+      function render() {
+
+
+        renderer.render( scene, camera );
+
+      }
+
+    </script>
+
+  </body>
+</html>

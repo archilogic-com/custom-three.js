@@ -20,6 +20,8 @@ THREE.UniformsLib = {
 		"flipEnvMap" : { type: "f", value: - 1 },
 		"reflectivity" : { type: "f", value: 1.0 },
 		"refractionRatio" : { type: "f", value: 0.98 },
+		"cubeSize": {type: "v3", value: new THREE.Vector3(1, 1, 1)},
+		"cubePos": {type: "v3", value: new THREE.Vector3(0, 0, 0)},
 
 		"morphTargetInfluences" : { type: "f", value: 0 }
 

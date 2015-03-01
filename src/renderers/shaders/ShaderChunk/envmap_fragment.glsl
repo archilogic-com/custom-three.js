@@ -26,7 +26,7 @@
 	#endif
 
 	#ifdef USE_PARALLAX_CORRECTION
-	    vec3 ndir = normalize(reflectVec);
+	    vec3 nrdir = normalize(reflectVec);
 	    vec3 rbmax = (0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;
 	    vec3 rbmin = (-0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;
 
@@ -54,7 +54,7 @@
 		sampleUV.y = clamp( flipNormal * reflectVec.y * 0.5 + 0.5, 0.0, 1.0);
 		sampleUV.x = atan( flipNormal * reflectVec.z, flipNormal * reflectVec.x ) * 0.15915494309189533576888376337251 + 0.5; // reciprocal( 2 PI ) + 0.5
 		vec4 envColor = texture2D( envMap, sampleUV );
-		
+
 	#elif defined( ENVMAP_TYPE_SPHERE )
 		vec3 reflectView = flipNormal * normalize((viewMatrix * vec4( reflectVec, 0.0 )).xyz + vec3(0.0,0.0,1.0));
 		vec4 envColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5 );
