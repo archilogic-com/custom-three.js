@@ -2430,6 +2430,19 @@ THREE.WebGLRenderer = function ( parameters ) {
 		var programAttributes = program.attributes;
 		var programAttributesKeys = program.attributesKeys;
 
+		if(geometry instanceof THREE.InterleavedBufferGeometry) {
+			_gl.bindBuffer( _gl.ARRAY_BUFFER, geometry.buffer );
+
+			var attributes = geometry.attributes;
+			attributes.forEach(function(attribute) {
+				enableAttribute( attribute.location );
+				_gl.vertexAttribPointer(attribute.location, attribute.itemSize, _gl.FLOAT, false, geometry.stride * 4, attribute.offset * 4);
+			});
+
+			disableUnusedAttributes();
+			return;
+		}
+
 		for ( var i = 0, l = programAttributesKeys.length; i < l; i ++ ) {
 
 			var key = programAttributesKeys[ i ];
@@ -2580,15 +2593,20 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 				}
 
-				var position = geometry.attributes[ 'position' ];
+				if(geometry instanceof THREE.InterleavedBufferGeometry) {
+					_gl.drawArrays(mode, 0, geometry.count);
+				} else {
+					var position = geometry.attributes[ 'position' ];
 
-				// render non-indexed triangles
+					// render non-indexed triangles
 
-				_gl.drawArrays( mode, 0, position.array.length / 3 );
+					_gl.drawArrays( mode, 0, position.array.length / 3 );
 
-				_this.info.render.calls ++;
-				_this.info.render.vertices += position.array.length / 3;
-				_this.info.render.faces += position.array.length / 9;
+					_this.info.render.calls ++;
+					_this.info.render.vertices += position.array.length / 3;
+					_this.info.render.faces += position.array.length / 9;
+				}
+
 
 			}
 
@@ -3512,7 +3530,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			_this.setMaterialFaces( material );
 
-			if ( buffer instanceof THREE.BufferGeometry ) {
+			if ( (buffer instanceof THREE.BufferGeometry) || (buffer instanceof THREE.InterleavedBufferGeometry) ) {
 
 				_this.renderBufferDirect( camera, lights, fog, material, buffer, object );
 
@@ -3669,7 +3687,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			geometry.__webglInit = true;
 			geometry.addEventListener( 'dispose', onGeometryDispose );
 
-			if ( geometry instanceof THREE.BufferGeometry ) {
+			if ( (geometry instanceof THREE.BufferGeometry) || (geometry instanceof THREE.InterleavedBufferGeometry) ) {
 
 				_this.info.memory.geometries ++;
 
@@ -3712,7 +3730,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			if ( object instanceof THREE.Mesh ) {
 
-				if ( geometry instanceof THREE.BufferGeometry ) {
+				if ( (geometry instanceof THREE.BufferGeometry) || (geometry instanceof THREE.InterleavedBufferGeometry) ) {
 
 					addBuffer( _webglObjects, geometry, object );
 
@@ -3942,6 +3960,20 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 				}
 
+			}
+
+		} else if(geometry instanceof THREE.InterleavedBufferGeometry ){
+			var array = geometry.array;
+
+			if(geometry.buffer === undefined) {
+				geometry.buffer = _gl.createBuffer();
+				geometry.needsUpdate = true;
+			}
+
+			if(geometry.needsUpdate) {
+				_gl.bindBuffer(_gl.ARRAY_BUFFER, geometry.buffer);
+				_gl.bufferData( _gl.ARRAY_BUFFER, array, _gl.STATIC_DRAW );
+				geometry.needsUpdate = false;
 			}
 
 		} else if ( object instanceof THREE.Mesh ) {

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>three.js webgl - geometry - interleavedbuffergeometry</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                font-family: Monospace;
+                background-color: #f0f0f0;
+                margin: 0px;
+                overflow: hidden;
+            }
+        </style>
+
+        <script src="../build/three.js"></script>
+    </head>
+    <body>
+    <script>
+        var renderer = new THREE.WebGLRenderer();
+
+        var data = [    
+        -1, 1,  -1, -1, 0,  0, 
+        -1, -1, -1, -1, 0,  0,
+        -1, -1, 1,  -1, 0,  0, 
+        1,  1,  -1, 0,  0,  -1,
+        1,  -1, -1, 0,  0,  -1,
+        -1, -1, -1, 0,  0,  -1,
+        1,  1,  1,  1,  0,  0,
+        1,  -1, 1,  1,  0,  0,
+        1,  -1, -1, 1,  0,  0,
+        -1, 1,  1,  0,  0,  1,
+        -1, -1, 1,  0,  0,  1,
+        1,  -1, 1,  0,  0,  1,
+        -1, -1, -1, 0,  -1, 0,
+        1,  -1, -1, 0,  -1, 0,
+        1,  -1, 1,  0,  -1, 0,
+        1,  1,  -1, 0,  1,  0,
+        -1, 1,  -1, 0,  1,  0,
+        -1, 1,  1,  0,  1,  0,
+        -1, 1,  1,  -1, 0,  0,
+        -1, 1,  -1, -1, 0,  0,
+        -1, -1, 1,  -1, 0,  0,
+        -1, 1,  -1, 0,  0,  -1,
+        1,  1,  -1, 0,  0,  -1,
+        -1, -1, -1, 0,  0,  -1,
+        1,  1,  -1, 1,  0,  0,
+        1,  1,  1,  1,  0,  0,
+        1,  -1, -1, 1,  0,  0,
+        1,  1,  1,  0,  0,  1,
+        -1, 1,  1,  0,  0,  1,
+        1,  -1, 1,  0,  0,  1,
+        -1, -1, 1,  0,  -1, 0,
+        -1, -1, -1, 0,  -1, 0,
+        1,  -1, 1,  0,  -1, 0,
+        1,  1,  1,  0,  1,  0,
+        1,  1,  -1, 0,  1,  0,
+        -1, 1,  1,  0,  1,  0];
+
+        var attributes = [
+            {name: "position", itemSize: 3},
+            {name: "normal", itemSize: 3}
+        ];
+
+        var geometry = new THREE.InterleavedBufferGeometry(attributes, new Float32Array(data));
+
+        var cube = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xFF0000}));
+
+        // see TODO in InterleavedBufferGeometry.js
+        cube.frustumCulled = false;
+
+        var scene = new THREE.Scene();
+
+        scene.add(cube);
+        scene.add(new THREE.AmbientLight(0x444444))
+
+        var directionalLight = new THREE.DirectionalLight(0x444444)
+        directionalLight.position.set(1, 1, 1)
+
+        scene.add(directionalLight)
+
+        var camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 100);
+        camera.position.z = 3;
+
+        renderer.setSize(window.innerWidth, window.innerHeight)
+
+        function render() {
+            requestAnimationFrame(render);
+            cube.rotation.x += 0.01
+            cube.rotation.y += 0.005
+            renderer.render(scene, camera);
+        }
+
+        document.body.appendChild(renderer.domElement)
+
+        render();
+        
+    </script>
+
+</body>
+</html>
