@@ -4174,6 +4174,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			map: !! material.map,
 			envMap: !! material.envMap,
 			envMapMode: material.envMap && material.envMap.mapping,
+			useParallaxCorrection: !!material.useParallaxCorrection,
 			lightMap: !! material.lightMap,
 			bumpMap: !! material.bumpMap,
 			normalMap: !! material.normalMap,
@@ -4663,6 +4664,11 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		uniforms.envMap.value = material.envMap;
 		uniforms.flipEnvMap.value = ( material.envMap instanceof THREE.WebGLRenderTargetCube ) ? 1 : - 1;
+
+		if(material.useParallaxCorrection) {
+			uniforms.cubeSize.value = material.cubeSize;
+			uniforms.cubePos.value = material.cubePos;
+		}
 
 		if ( _this.gammaInput ) {
 

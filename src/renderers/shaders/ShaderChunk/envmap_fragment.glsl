@@ -25,6 +25,21 @@
 
 	#endif
 
+	#ifdef USE_PARALLAX_CORRECTION
+	    vec3 ndir = normalize(reflectVec);
+	    vec3 rbmax = (0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;
+	    vec3 rbmin = (-0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;
+
+	    vec3 rbminmax;
+	    rbminmax.x = (nrdir.x > 0.0) ? rbmax.x : rbmin.x;
+	    rbminmax.y = (nrdir.y > 0.0) ? rbmax.y : rbmin.y;
+	    rbminmax.z = (nrdir.z > 0.0) ? rbmax.z : rbmin.z;
+	    float correction = min(min(rbminmax.x, rbminmax.y), rbminmax.z);
+
+	    vec3 intersection = vWorldPosition + nrdir * correction;
+	    reflectVec = intersection - cubePos;
+	#endif
+
 	#ifdef DOUBLE_SIDED
 		float flipNormal = ( -1.0 + 2.0 * float( gl_FrontFacing ) );
 	#else
