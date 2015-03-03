@@ -39,13 +39,13 @@
         }];
 
         var geometry = new THREE.InterleavedBufferGeometry(attributes, new Float32Array(buffer), new Uint16Array(indices));
+
+        geometry.computeBoundingBox()
         var cube = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({
           color: 0xFF0000,
           map: THREE.ImageUtils.loadTexture("textures/brick_diffuse.jpg")
         }));
 
-        // see TODO in InterleavedBufferGeometry.js
-        cube.frustumCulled = false;
 
         var scene = new THREE.Scene();
 

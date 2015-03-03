@@ -19,10 +19,10 @@
     <script>
         var renderer = new THREE.WebGLRenderer();
 
-        var data = [    
-        -1, 1,  -1, -1, 0,  0, 
+        var data = [
+        -1, 1,  -1, -1, 0,  0,
         -1, -1, -1, -1, 0,  0,
-        -1, -1, 1,  -1, 0,  0, 
+        -1, -1, 1,  -1, 0,  0,
         1,  1,  -1, 0,  0,  -1,
         1,  -1, -1, 0,  0,  -1,
         -1, -1, -1, 0,  0,  -1,
@@ -66,9 +66,6 @@
 
         var cube = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({color: 0xFF0000}));
 
-        // see TODO in InterleavedBufferGeometry.js
-        cube.frustumCulled = false;
-
         var scene = new THREE.Scene();
 
         scene.add(cube);
@@ -94,7 +91,7 @@
         document.body.appendChild(renderer.domElement)
 
         render();
-        
+
     </script>
 
 </body>

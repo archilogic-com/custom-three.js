@@ -8419,13 +8419,111 @@ THREE.InterleavedBufferGeometry = function(attributes, array, indices) {
         attribute.stride = attributes.length > 1 ? stride : 0;
         offset += attribute.itemSize
     });
-    // TODO for Culling
-    //this.boundingBox = null;
-    //this.boundingSphere = null;
+
+    this.boundingBox = null;
+    this.boundingSphere = null;
 };
 
 THREE.InterleavedBufferGeometry.prototype = {
-    constructor: THREE.InterleavedBufferGeometry
+    constructor: THREE.InterleavedBufferGeometry,
+
+    computeBoundingBox: function () {
+
+        var vector = new THREE.Vector3();
+
+        return function () {
+
+            if ( this.boundingBox === null ) {
+
+                this.boundingBox = new THREE.Box3();
+
+            }
+
+            var bb = this.boundingBox;
+            bb.makeEmpty();
+
+            if(this.stride === 0) {
+                var step = 3;
+            } else {
+                var step = this.stride - 3 - 1;
+            }
+
+            for ( var i = 0, il = this.array.length; i < il; i += step ) {
+
+                vector.set( this.array[ i ], this.array[ i + 1 ], this.array[ i + 2 ] );
+                console.log(vector.x, vector.y, vector.z);
+                bb.expandByPoint( vector );
+
+            }
+
+
+
+            if ( isNaN( this.boundingBox.min.x ) || isNaN( this.boundingBox.min.y ) || isNaN( this.boundingBox.min.z ) ) {
+
+                console.error( 'THREE.BufferGeometry.computeBoundingBox: Computed min/max have NaN values. The "position" attribute is likely to have NaN values.' );
+
+            }
+
+        }
+    }(),
+
+
+    computeBoundingSphere: function () {
+
+        var box = new THREE.Box3();
+        var vector = new THREE.Vector3();
+
+        return function () {
+
+            if ( this.boundingSphere === null ) {
+
+                this.boundingSphere = new THREE.Sphere();
+
+            }
+
+
+            box.makeEmpty();
+
+            if(this.stride === 0) {
+                var step = 3;
+            } else {
+                var step = this.stride - 3 - 1;
+            }
+
+            var center = this.boundingSphere.center;
+
+            for ( var i = 0, il = this.array.length; i < il; i += step ) {
+
+                vector.set( this.array[ i ], this.array[ i + 1 ], this.array[ i + 2 ] );
+                box.expandByPoint( vector );
+
+            }
+
+            box.center( center );
+
+            // hoping to find a boundingSphere with a radius smaller than the
+            // boundingSphere of the boundingBox:  sqrt(3) smaller in the best case
+
+            var maxRadiusSq = 0;
+
+            for ( var i = 0, il = this.array.length; i < il; i += step ) {
+
+                vector.set( this.array[ i ], this.array[ i + 1 ], this.array[ i + 2 ] );
+                maxRadiusSq = Math.max( maxRadiusSq, center.distanceToSquared( vector ) );
+
+            }
+
+            this.boundingSphere.radius = Math.sqrt( maxRadiusSq );
+
+            if ( isNaN( this.boundingSphere.radius ) ) {
+
+                console.error( 'THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values.' );
+
+            }
+
+        }
+
+    }()
 };
 
 THREE.EventDispatcher.prototype.apply( THREE.InterleavedBufferGeometry.prototype );
@@ -17549,9 +17647,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 		memory: {
 
 			programs: 0,
-			geometries: 0,
-			textures: 0
-
+			textures: 0,
+			bytesAllocated: 0
 		},
 
 		render: {
