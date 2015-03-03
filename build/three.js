@@ -8382,11 +8382,11 @@ THREE.Float64Attribute = function ( data, itemSize ) {
  *  {name: "normal", itemSize: 3},
  *  {name: "uv", itemSize: 2},
  *  {name: "uv2", itemSize: 2}
- *];
- * 
+ *]; => Float32Array
  *
+ * var index = [0, 1, 2,..] => UInt16/32Array
  */
-THREE.InterleavedBufferGeometry = function(attributes, array) {
+THREE.InterleavedBufferGeometry = function(attributes, array, indices) {
     Object.defineProperty( this, 'id', { value: THREE.GeometryIdCount ++ } );
 
     this.name = '';
@@ -8394,9 +8394,16 @@ THREE.InterleavedBufferGeometry = function(attributes, array) {
 
     this.attributes = attributes;
     this.array = array;
+    this.offsets = [];
+
+    if(indices) {
+        this.index = {
+            array: indices
+        };
+    }
 
     if(attributes.length > 1){
-        var stride = this.stride = attributes.map(function(a) { return a.itemSize; }).reduce(function(a, b) { return a + b; }, 0);  
+        var stride = this.stride = attributes.map(function(a) { return a.itemSize; }).reduce(function(a, b) { return a + b; }, 0);
         this.count = this.array.length / this.stride;
     } else {
         var stride = 0;
@@ -19972,7 +19979,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			var mode = material.wireframe === true ? _gl.LINES : _gl.TRIANGLES;
 
-			var index = geometry.attributes.index;
+			var index = (geometry instanceof THREE.InterleavedBufferGeometry) ? geometry.index : geometry.attributes.index;
 
 			if ( index ) {
 
@@ -21421,13 +21428,25 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		} else if(geometry instanceof THREE.InterleavedBufferGeometry ){
 			var array = geometry.array;
+			var index = geometry.index;
 
 			if(geometry.buffer === undefined) {
 				geometry.buffer = _gl.createBuffer();
 				geometry.needsUpdate = true;
+
+				if(index) {
+					geometry.index.buffer = _gl.createBuffer();
+				}
+
 			}
 
 			if(geometry.needsUpdate) {
+
+				if(index) {
+					_gl.bindBuffer(_gl.ELEMENT_ARRAY_BUFFER, geometry.index.buffer);
+					_gl.bufferData(_gl.ELEMENT_ARRAY_BUFFER, geometry.index.array, _gl.STATIC_DRAW);
+				}
+
 				_gl.bindBuffer(_gl.ARRAY_BUFFER, geometry.buffer);
 				_gl.bufferData( _gl.ARRAY_BUFFER, array, _gl.STATIC_DRAW );
 				geometry.needsUpdate = false;

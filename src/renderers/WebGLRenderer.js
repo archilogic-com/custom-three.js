@@ -85,9 +85,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 		memory: {
 
 			programs: 0,
-			geometries: 0,
-			textures: 0
-
+			textures: 0,
+			bytesAllocated: 0
 		},
 
 		render: {
@@ -2515,7 +2514,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			var mode = material.wireframe === true ? _gl.LINES : _gl.TRIANGLES;
 
-			var index = geometry.attributes.index;
+			var index = (geometry instanceof THREE.InterleavedBufferGeometry) ? geometry.index : geometry.attributes.index;
 
 			if ( index ) {
 
@@ -3964,13 +3963,25 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		} else if(geometry instanceof THREE.InterleavedBufferGeometry ){
 			var array = geometry.array;
+			var index = geometry.index;
 
 			if(geometry.buffer === undefined) {
 				geometry.buffer = _gl.createBuffer();
 				geometry.needsUpdate = true;
+
+				if(index) {
+					geometry.index.buffer = _gl.createBuffer();
+				}
+
 			}
 
 			if(geometry.needsUpdate) {
+
+				if(index) {
+					_gl.bindBuffer(_gl.ELEMENT_ARRAY_BUFFER, geometry.index.buffer);
+					_gl.bufferData(_gl.ELEMENT_ARRAY_BUFFER, geometry.index.array, _gl.STATIC_DRAW);
+				}
+
 				_gl.bindBuffer(_gl.ARRAY_BUFFER, geometry.buffer);
 				_gl.bufferData( _gl.ARRAY_BUFFER, array, _gl.STATIC_DRAW );
 				geometry.needsUpdate = false;
