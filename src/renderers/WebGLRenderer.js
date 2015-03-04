@@ -2547,7 +2547,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 						_gl.bindBuffer( _gl.ELEMENT_ARRAY_BUFFER, index.buffer );
 
 					}
-                    console.log("drawing interleavedgeo")
 					_gl.drawElements( mode, index.array.length, type, 0 );
 
 					_this.info.render.calls ++;
