@@ -2434,8 +2434,11 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 			var attributes = geometry.attributes;
 			attributes.forEach(function(attribute) {
-				enableAttribute( attribute.location );
-				_gl.vertexAttribPointer(attribute.location, attribute.itemSize, _gl.FLOAT, false, geometry.stride * 4, attribute.offset * 4);
+                var attribLocation = programAttributes[attribute.name];
+                if(attribLocation >= 0) {
+    				enableAttribute(attribLocation);
+    				_gl.vertexAttribPointer(attribLocation, attribute.itemSize, _gl.FLOAT, false, geometry.stride * 4, attribute.offset * 4);
+                }
 			});
 
 			disableUnusedAttributes();
