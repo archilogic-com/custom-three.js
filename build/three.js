@@ -8445,7 +8445,7 @@ THREE.InterleavedBufferGeometry.prototype = {
             if(this.stride === 0) {
                 var step = 3;
             } else {
-                var step = this.stride - 3 - 1;
+                var step = this.stride;
             }
 
             for ( var i = 0, il = this.array.length; i < il; i += step ) {
@@ -8486,7 +8486,7 @@ THREE.InterleavedBufferGeometry.prototype = {
             if(this.stride === 0) {
                 var step = 3;
             } else {
-                var step = this.stride - 3 - 1;
+                var step = this.stride;
             }
 
             var center = this.boundingSphere.center;
@@ -20108,7 +20108,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 						_gl.bindBuffer( _gl.ELEMENT_ARRAY_BUFFER, index.buffer );
 
 					}
-
+                    console.log("drawing interleavedgeo")
 					_gl.drawElements( mode, index.array.length, type, 0 );
 
 					_this.info.render.calls ++;

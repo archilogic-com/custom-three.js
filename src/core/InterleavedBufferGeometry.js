@@ -67,7 +67,7 @@ THREE.InterleavedBufferGeometry.prototype = {
             if(this.stride === 0) {
                 var step = 3;
             } else {
-                var step = this.stride - 3 - 1;
+                var step = this.stride;
             }
 
             for ( var i = 0, il = this.array.length; i < il; i += step ) {
@@ -108,7 +108,7 @@ THREE.InterleavedBufferGeometry.prototype = {
             if(this.stride === 0) {
                 var step = 3;
             } else {
-                var step = this.stride - 3 - 1;
+                var step = this.stride;
             }
 
             var center = this.boundingSphere.center;
