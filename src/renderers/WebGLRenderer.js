@@ -2423,12 +2423,12 @@ THREE.WebGLRenderer = function ( parameters ) {
 			attributes.forEach(function(attribute) {
                 var attribLocation = programAttributes[attribute.name];
                 if(attribLocation >= 0) {
-    				enableAttribute(attribLocation);
+    				state.enableAttribute(attribLocation);
     				_gl.vertexAttribPointer(attribLocation, attribute.itemSize, _gl.FLOAT, false, geometry.stride * 4, attribute.offset * 4);
                 }
 			});
 
-			disableUnusedAttributes();
+			state.disableUnusedAttributes();
 			return;
 		}
 
@@ -2594,6 +2594,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 					_this.info.render.faces += position.array.length / ( 3 * position.itemSize );
 
 				}
+			}
 
 		} else if ( object instanceof THREE.PointCloud ) {
 
