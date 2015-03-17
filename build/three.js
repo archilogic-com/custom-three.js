@@ -8473,7 +8473,6 @@ THREE.Float64Attribute = function ( data, itemSize ) {
 
 };
 
-<<<<<<< HEAD
 // File:src/core/InterleavedBufferGeometry.js
 
 /**
@@ -8627,7 +8626,6 @@ THREE.InterleavedBufferGeometry.prototype = {
 
 THREE.EventDispatcher.prototype.apply( THREE.InterleavedBufferGeometry.prototype );
 
-=======
 // File:src/core/DynamicBufferAttribute.js
 
 /**
@@ -8652,7 +8650,6 @@ THREE.DynamicBufferAttribute.prototype.clone = function () {
 
 };
 
->>>>>>> f73593b00e3b2c927bb1a3236240cea5597166ec
 // File:src/core/BufferGeometry.js
 
 /**
@@ -16892,11 +16889,7 @@ THREE.ShaderChunk[ 'map_pars_vertex'] = "#if defined( USE_MAP ) || defined( USE_
 
 // File:src/renderers/shaders/ShaderChunk/envmap_fragment.glsl
 
-<<<<<<< HEAD
-THREE.ShaderChunk[ 'envmap_fragment'] = "#ifdef USE_ENVMAP\n\n	#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\n		vec3 cameraToVertex = normalize( vWorldPosition - cameraPosition );\n\n		// http://en.wikibooks.org/wiki/GLSL_Programming/Applying_Matrix_Transformations\n		// Transforming Normal Vectors with the Inverse Transformation\n\n		vec3 worldNormal = normalize( vec3( vec4( normal, 0.0 ) * viewMatrix ) );\n\n		#ifdef ENVMAP_MODE_REFLECTION\n\n			vec3 reflectVec = reflect( cameraToVertex, worldNormal );\n\n		#else\n\n			vec3 reflectVec = refract( cameraToVertex, worldNormal, refractionRatio );\n\n		#endif\n\n	#else\n\n		vec3 reflectVec = vReflect;\n\n	#endif\n\n	#ifdef USE_PARALLAX_CORRECTION\n	    vec3 nrdir = normalize(reflectVec);\n	    vec3 rbmax = (0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;\n	    vec3 rbmin = (-0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;\n\n	    vec3 rbminmax;\n	    rbminmax.x = (nrdir.x > 0.0) ? rbmax.x : rbmin.x;\n	    rbminmax.y = (nrdir.y > 0.0) ? rbmax.y : rbmin.y;\n	    rbminmax.z = (nrdir.z > 0.0) ? rbmax.z : rbmin.z;\n	    float correction = min(min(rbminmax.x, rbminmax.y), rbminmax.z);\n\n	    vec3 intersection = vWorldPosition + nrdir * correction;\n	    reflectVec = intersection - cubePos;\n	#endif\n\n	#ifdef DOUBLE_SIDED\n		float flipNormal = ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n	#else\n		float flipNormal = 1.0;\n	#endif\n\n	#ifdef ENVMAP_TYPE_CUBE\n		vec4 envColor = textureCube( envMap, flipNormal * vec3( flipEnvMap * reflectVec.x, reflectVec.yz ) );\n\n	#elif defined( ENVMAP_TYPE_EQUIREC )\n		vec2 sampleUV;\n		sampleUV.y = clamp( flipNormal * reflectVec.y * 0.5 + 0.5, 0.0, 1.0);\n		sampleUV.x = atan( flipNormal * reflectVec.z, flipNormal * reflectVec.x ) * 0.15915494309189533576888376337251 + 0.5; // reciprocal( 2 PI ) + 0.5\n		vec4 envColor = texture2D( envMap, sampleUV );\n\n	#elif defined( ENVMAP_TYPE_SPHERE )\n		vec3 reflectView = flipNormal * normalize((viewMatrix * vec4( reflectVec, 0.0 )).xyz + vec3(0.0,0.0,1.0));\n		vec4 envColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5 );\n	#endif\n\n	#ifdef GAMMA_INPUT\n\n		envColor.xyz *= envColor.xyz;\n\n	#endif\n\n	#ifdef ENVMAP_BLENDING_MULTIPLY\n\n		gl_FragColor.xyz = mix( gl_FragColor.xyz, gl_FragColor.xyz * envColor.xyz, specularStrength * reflectivity );\n\n	#elif defined( ENVMAP_BLENDING_MIX )\n\n		gl_FragColor.xyz = mix( gl_FragColor.xyz, envColor.xyz, specularStrength * reflectivity );\n\n	#elif defined( ENVMAP_BLENDING_ADD )\n\n		gl_FragColor.xyz += envColor.xyz * specularStrength * reflectivity;\n\n	#endif\n\n#endif\n";
-=======
-THREE.ShaderChunk[ 'envmap_fragment'] = "#ifdef USE_ENVMAP\n\n	#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\n		vec3 cameraToVertex = normalize( vWorldPosition - cameraPosition );\n\n		// Transforming Normal Vectors with the Inverse Transformation\n		vec3 worldNormal = inverseTransformDirection( normal, viewMatrix );\n\n		#ifdef ENVMAP_MODE_REFLECTION\n\n			vec3 reflectVec = reflect( cameraToVertex, worldNormal );\n\n		#else\n\n			vec3 reflectVec = refract( cameraToVertex, worldNormal, refractionRatio );\n\n		#endif\n\n	#else\n\n		vec3 reflectVec = vReflect;\n\n	#endif\n\n	#ifdef DOUBLE_SIDED\n		float flipNormal = ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n	#else\n		float flipNormal = 1.0;\n	#endif\n\n	#ifdef ENVMAP_TYPE_CUBE\n		vec4 envColor = textureCube( envMap, flipNormal * vec3( flipEnvMap * reflectVec.x, reflectVec.yz ) );\n\n	#elif defined( ENVMAP_TYPE_EQUIREC )\n		vec2 sampleUV;\n		sampleUV.y = saturate( flipNormal * reflectVec.y * 0.5 + 0.5 );\n		sampleUV.x = atan( flipNormal * reflectVec.z, flipNormal * reflectVec.x ) * RECIPROCAL_PI2 + 0.5;\n		vec4 envColor = texture2D( envMap, sampleUV );\n\n	#elif defined( ENVMAP_TYPE_SPHERE )\n		vec3 reflectView = flipNormal * normalize((viewMatrix * vec4( reflectVec, 0.0 )).xyz + vec3(0.0,0.0,1.0));\n		vec4 envColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5 );\n	#endif\n\n	envColor.xyz = inputToLinear( envColor.xyz );\n\n	#ifdef ENVMAP_BLENDING_MULTIPLY\n\n		outgoingLight = mix( outgoingLight, outgoingLight * envColor.xyz, specularStrength * reflectivity );\n\n	#elif defined( ENVMAP_BLENDING_MIX )\n\n		outgoingLight = mix( outgoingLight, envColor.xyz, specularStrength * reflectivity );\n\n	#elif defined( ENVMAP_BLENDING_ADD )\n\n		outgoingLight += envColor.xyz * specularStrength * reflectivity;\n\n	#endif\n\n#endif\n";
->>>>>>> f73593b00e3b2c927bb1a3236240cea5597166ec
+THREE.ShaderChunk[ 'envmap_fragment'] = "#ifdef USE_ENVMAP\n\n	#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG )\n\n		vec3 cameraToVertex = normalize( vWorldPosition - cameraPosition );\n\n		// Transforming Normal Vectors with the Inverse Transformation\n		vec3 worldNormal = inverseTransformDirection( normal, viewMatrix );\n\n		#ifdef ENVMAP_MODE_REFLECTION\n\n			vec3 reflectVec = reflect( cameraToVertex, worldNormal );\n\n		#else\n\n			vec3 reflectVec = refract( cameraToVertex, worldNormal, refractionRatio );\n\n		#endif\n\n	#else\n\n		vec3 reflectVec = vReflect;\n\n	#endif\n\n	#ifdef USE_PARALLAX_CORRECTION\n	    vec3 nrdir = normalize(reflectVec);\n	    vec3 rbmax = (0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;\n	    vec3 rbmin = (-0.5 * (cubeSize - cubePos) - vWorldPosition) / nrdir;\n\n	    vec3 rbminmax;\n	    rbminmax.x = (nrdir.x > 0.0) ? rbmax.x : rbmin.x;\n	    rbminmax.y = (nrdir.y > 0.0) ? rbmax.y : rbmin.y;\n	    rbminmax.z = (nrdir.z > 0.0) ? rbmax.z : rbmin.z;\n	    float correction = min(min(rbminmax.x, rbminmax.y), rbminmax.z);\n\n	    vec3 intersection = vWorldPosition + nrdir * correction;\n	    reflectVec = intersection - cubePos;\n	#endif\n\n	#ifdef DOUBLE_SIDED\n		float flipNormal = ( -1.0 + 2.0 * float( gl_FrontFacing ) );\n	#else\n		float flipNormal = 1.0;\n	#endif\n\n	#ifdef ENVMAP_TYPE_CUBE\n		vec4 envColor = textureCube( envMap, flipNormal * vec3( flipEnvMap * reflectVec.x, reflectVec.yz ) );\n\n	#elif defined( ENVMAP_TYPE_EQUIREC )\n		vec2 sampleUV;\n		sampleUV.y = saturate( flipNormal * reflectVec.y * 0.5 + 0.5 );\n		sampleUV.x = atan( flipNormal * reflectVec.z, flipNormal * reflectVec.x ) * RECIPROCAL_PI2 + 0.5;\n		vec4 envColor = texture2D( envMap, sampleUV );\n\n	#elif defined( ENVMAP_TYPE_SPHERE )\n		vec3 reflectView = flipNormal * normalize((viewMatrix * vec4( reflectVec, 0.0 )).xyz + vec3(0.0,0.0,1.0));\n		vec4 envColor = texture2D( envMap, reflectView.xy * 0.5 + 0.5 );\n	#endif\n\n	envColor.xyz = inputToLinear( envColor.xyz );\n\n	#ifdef ENVMAP_BLENDING_MULTIPLY\n\n		outgoingLight = mix( outgoingLight, outgoingLight * envColor.xyz, specularStrength * reflectivity );\n\n	#elif defined( ENVMAP_BLENDING_MIX )\n\n		outgoingLight = mix( outgoingLight, envColor.xyz, specularStrength * reflectivity );\n\n	#elif defined( ENVMAP_BLENDING_ADD )\n\n		outgoingLight += envColor.xyz * specularStrength * reflectivity;\n\n	#endif\n\n#endif\n";
 
 // File:src/renderers/shaders/ShaderChunk/specularmap_pars_fragment.glsl
 
@@ -20409,12 +20402,12 @@ THREE.WebGLRenderer = function ( parameters ) {
 			attributes.forEach(function(attribute) {
                 var attribLocation = programAttributes[attribute.name];
                 if(attribLocation >= 0) {
-    				enableAttribute(attribLocation);
+    				state.enableAttribute(attribLocation);
     				_gl.vertexAttribPointer(attribLocation, attribute.itemSize, _gl.FLOAT, false, geometry.stride * 4, attribute.offset * 4);
                 }
 			});
 
-			disableUnusedAttributes();
+			state.disableUnusedAttributes();
 			return;
 		}
 
@@ -20573,23 +20566,13 @@ THREE.WebGLRenderer = function ( parameters ) {
 					var position = geometry.attributes[ 'position' ];
 
 					// render non-indexed triangles
-
-<<<<<<< HEAD
-					_gl.drawArrays( mode, 0, position.array.length / 3 );
+					_gl.drawArrays( mode, 0, position.array.length / position.itemSize );
 
 					_this.info.render.calls ++;
-					_this.info.render.vertices += position.array.length / 3;
-					_this.info.render.faces += position.array.length / 9;
+					_this.info.render.vertices += position.array.length / position.itemSize;
+					_this.info.render.faces += position.array.length / ( 3 * position.itemSize );
+
 				}
-
-=======
-				_gl.drawArrays( mode, 0, position.array.length / position.itemSize );
-
-				_this.info.render.calls ++;
-				_this.info.render.vertices += position.array.length / position.itemSize;
-				_this.info.render.faces += position.array.length / ( 3 * position.itemSize );
->>>>>>> f73593b00e3b2c927bb1a3236240cea5597166ec
-
 			}
 
 		} else if ( object instanceof THREE.PointCloud ) {
@@ -22680,7 +22663,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 		uniforms.envMap.value = material.envMap;
 		uniforms.flipEnvMap.value = ( material.envMap instanceof THREE.WebGLRenderTargetCube ) ? 1 : - 1;
 
-<<<<<<< HEAD
+
 		if(material.useParallaxCorrection) {
 			uniforms.cubeSize.value = material.cubeSize;
 			uniforms.cubePos.value = material.cubePos;
@@ -22697,9 +22680,6 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
-=======
-		uniforms.reflectivity.value = material.reflectivity;
->>>>>>> f73593b00e3b2c927bb1a3236240cea5597166ec
 		uniforms.refractionRatio.value = material.refractionRatio;
 
 	}
