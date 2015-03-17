@@ -118,7 +118,7 @@
         scene.add(sphere);
 
         var loader = new THREE.OBJMTLLoader();
-        loader.load("obj/room.obj", "obj/room.mtl", function(o) {
+        loader.load("obj/room.obj.txt", "obj/room.mtl", function(o) {
           o.traverse(function(child) {
             if (child.material) {
               return child.material = cubeMaterial;
@@ -127,7 +127,7 @@
           return scene.add(o);
         }, onProgress, onError);
 
-        loader.load("obj/pillars.obj", "obj/pillars.mtl", function(o) {
+        loader.load("obj/pillars.obj.txt", "obj/pillars.mtl", function(o) {
           o.traverse(function(child) {
             if (child.material) {
               child.material = new THREE.MeshPhongMaterial({
