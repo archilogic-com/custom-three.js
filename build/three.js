@@ -16833,7 +16833,7 @@ THREE.ShaderChunk[ 'lights_phong_pars_vertex'] = "#if MAX_SPOT_LIGHTS > 0 || def
 
 // File:src/renderers/shaders/ShaderChunk/lightmap_pars_fragment.glsl
 
-THREE.ShaderChunk[ 'lightmap_pars_fragment'] = "#ifdef USE_LIGHTMAP\n\n	varying vec2 vUv2;\n	uniform sampler2D lightMap;\n\n#endif";
+THREE.ShaderChunk[ 'lightmap_pars_fragment'] = "#ifdef USE_LIGHTMAP\n\n	varying vec2 vUv2;\n	uniform sampler2D lightMap;\n    \n    #ifdef USE_ENHANCED_LIGHTMAP\n        //  <0, 2> the degree to which lightmap modifies the original texture color\n        uniform float lm_Intensity;\n\n        // <0, 1> neutral point in the light map color range where the original texture color is unchanged\n        uniform float lm_Center;\n\n        // <0, 1> quadratic rate of intensity decrease for extreme lightmap values\n        uniform float lm_Falloff;\n    #endif\n\n#endif\n";
 
 // File:src/renderers/shaders/ShaderChunk/shadowmap_vertex.glsl
 
@@ -16933,7 +16933,7 @@ THREE.ShaderChunk[ 'map_vertex'] = "#if defined( USE_MAP ) || defined( USE_BUMPM
 
 // File:src/renderers/shaders/ShaderChunk/lightmap_fragment.glsl
 
-THREE.ShaderChunk[ 'lightmap_fragment'] = "#ifdef USE_LIGHTMAP\n\n	outgoingLight *= diffuseColor.xyz * texture2D( lightMap, vUv2 ).xyz;\n\n#endif";
+THREE.ShaderChunk[ 'lightmap_fragment'] = "#ifdef USE_LIGHTMAP\n\n    #ifndef USE_ENHANCED_LIGHTMAP\n        outgoingLight *= diffuseColor.xyz * texture2D( lightMap, vUv2 ).xyz;\n\n    #else\n        // compute the light value\n        vec4 unit = vec4(1.0);\n        vec4 light = 2.0 * (texture2D(lightMap, vUv2) - lm_Center * unit);\n\n        // compute the light intensity modifier\n        vec4 modifier = - lm_Falloff * light * light + unit;\n\n        // apply the lightmap\n        outgoingLight *= diffuseColor.xyz * light * modifier * lm_Intensity;\n    #endif\n    \n#endif\n";
 
 // File:src/renderers/shaders/ShaderChunk/shadowmap_pars_vertex.glsl
 
@@ -18019,6 +18019,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 	var sprites = [];
 	var lensFlares = [];
 
+    // Archilogic texture cache
+    var textureCache = {};
 	// public properties
 
 	this.domElement = _canvas;
@@ -18348,6 +18350,59 @@ THREE.WebGLRenderer = function ( parameters ) {
 	var spritePlugin = new THREE.SpritePlugin( this, sprites );
 	var lensFlarePlugin = new THREE.LensFlarePlugin( this, lensFlares );
 
+      // Cache helpers
+      var _isTextureUsed = function( imgUrl ) {
+        for( var object in _webglObjects ) {
+          if( !_webglObjects.hasOwnProperty( object ) ) continue;
+          var objectStruct = _webglObjects[object];
+          for( var i = 0; i < objectStruct.length; i++ ) {
+            var node = objectStruct[i].object;
+            if( node.material ) {
+              // if the texture is used in this material, return true
+              if(   ( node.material.map && node.material.map.sourceFile == imgUrl )
+                || ( node.material.lightMap && node.material.lightMap.sourceFile == imgUrl )
+                || ( node.material.specularMap && node.material.specularMap.sourceFile == imgUrl )
+                || ( node.material.alphaMap && node.material.alphaMap.sourceFile == imgUrl )
+                || ( node.material.normalMap && node.material.normalMap.sourceFile == imgUrl )
+              ) {
+                return true;
+              }
+            }
+
+            if( node.materials ) {
+              var materials = node.materials;
+              for( var i=0, len=materials.length; i<len; i++ ) {
+                // is this material using the texture?
+                if(  ( materials[i].map && materials[i].map.sourceFile == imgUrl )
+                  || ( materials[i].lightMap && materials[i].lightMap.sourceFile == imgUrl )
+                  || ( materials[i].specularMap && materials[i].specularMap.sourceFile == imgUrl )
+                  || ( materials[i].alphaMap && materials[i].alphaMap.sourceFile == imgUrl )
+                  || ( materials[i].normalMap && materials[i].normalMap.sourceFile == imgUrl )
+                ) {
+                  return true;
+                }
+              }
+            }
+
+            if( node.material && node.material.materials ) {
+              var materials = node.material.materials;
+              for( var i=0, len=materials.length; i<len; i++ ) {
+                // is this material using the texture?
+                if(  ( materials[i].map && materials[i].map.sourceFile == imgUrl )
+                  || ( materials[i].lightMap && materials[i].lightMap.sourceFile == imgUrl )
+                  || ( materials[i].specularMap && materials[i].specularMap.sourceFile == imgUrl )
+                  || ( materials[i].alphaMap && materials[i].alphaMap.sourceFile == imgUrl )
+                  || ( materials[i].normalMap && materials[i].normalMap.sourceFile == imgUrl )
+                ) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+        // neither this node, nor its children use the texture
+        return false;
+      };
 	// API
 
 	this.getContext = function () {
@@ -18656,18 +18711,19 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	};
 
-	var onTextureDispose = function ( event ) {
 
-		var texture = event.target;
+    var onTextureDispose = function ( event ) {
 
-		texture.removeEventListener( 'dispose', onTextureDispose );
-
-		deallocateTexture( texture );
-
-		_this.info.memory.textures --;
-
-
-	};
+        var texture = event.target;
+        // Caching starts here
+        if( !_isTextureUsed( texture.sourceFile ) ) {
+            texture.removeEventListener( 'dispose', onTextureDispose );
+            delete textureCache[texture.sourceFile];
+            deallocateTexture( texture );
+            _this.info.memory.textures --;
+        }
+        // Caching ends here
+    };
 
 	var onRenderTargetDispose = function ( event ) {
 
@@ -21725,7 +21781,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 	// Geometry splitting
 
-	var geometryGroups = {};
+    // Archilogic: Used in obj exporter
+	var geometryGroups = window.geometryGroups = {};
 	var geometryGroupCounter = 0;
 
 	function makeGroups( geometry, usesFaceMaterial ) {
@@ -22161,6 +22218,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 			envMapMode: material.envMap && material.envMap.mapping,
 			useParallaxCorrection: !!material.useParallaxCorrection,
 			lightMap: !! material.lightMap,
+            enhancedLightMap: !!material.enhancedLightMap,
 			bumpMap: !! material.bumpMap,
 			normalMap: !! material.normalMap,
 			specularMap: !! material.specularMap,
@@ -22440,6 +22498,12 @@ THREE.WebGLRenderer = function ( parameters ) {
 				}
 
 			}
+
+            if(material.enhancedLightMap) {
+                _gl.uniform1f(p_uniforms.lm_Intensity, material.enhancedLightMap.intensity * 0.5);
+                _gl.uniform1f(p_uniforms.lm_Center, material.enhancedLightMap.center);
+                _gl.uniform1f(p_uniforms.lm_Falloff, material.enhancedLightMap.falloff * material.enhancedLightMap.falloff);
+            }
 
 		}
 
@@ -23514,14 +23578,22 @@ THREE.WebGLRenderer = function ( parameters ) {
 	}
 
 	this.uploadTexture = function ( texture ) {
-
+        // Caching starts here
+        var cacheKey = texture.sourceFile;
+        // Caching ends here
 		if ( texture.__webglInit === undefined ) {
 
 			texture.__webglInit = true;
 
 			texture.addEventListener( 'dispose', onTextureDispose );
 
-			texture.__webglTexture = _gl.createTexture();
+            // Caching starts here
+            if(cacheKey && textureCache[cacheKey]) {
+                texture.__webglTexture = textureCache[cacheKey];
+            } else {
+                texture.__webglTexture = _gl.createTexture();
+            }
+            // Caching ends here
 
 			_this.info.memory.textures ++;
 
@@ -23623,6 +23695,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 		texture.needsUpdate = false;
 
 		if ( texture.onUpdate ) texture.onUpdate();
+        if ( cacheKey ) textureCache[cacheKey] = texture.__webglTexture;
 
 	};
 
@@ -24607,6 +24680,7 @@ THREE.WebGLProgram = ( function () {
 				parameters.envMap ? '#define ' + envMapModeDefine : '',
 				parameters.useParallaxCorrection ? '#define USE_PARALLAX_CORRECTION' : '',
 				parameters.lightMap ? '#define USE_LIGHTMAP' : '',
+                parameters.enhancedLightMap ? "#define USE_ENHANCED_LIGHTMAP" : "",
 				parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 				parameters.normalMap ? '#define USE_NORMALMAP' : '',
 				parameters.specularMap ? '#define USE_SPECULARMAP' : '',
@@ -24721,6 +24795,7 @@ THREE.WebGLProgram = ( function () {
 				parameters.envMap ? '#define ' + envMapBlendingDefine : '',
 				parameters.useParallaxCorrection ? '#define USE_PARALLAX_CORRECTION' : '',
 				parameters.lightMap ? '#define USE_LIGHTMAP' : '',
+                parameters.enhancedLightMap ? "#define USE_ENHANCED_LIGHTMAP" : "",
 				parameters.bumpMap ? '#define USE_BUMPMAP' : '',
 				parameters.normalMap ? '#define USE_NORMALMAP' : '',
 				parameters.specularMap ? '#define USE_SPECULARMAP' : '',
@@ -24822,6 +24897,10 @@ THREE.WebGLProgram = ( function () {
 			identifiers.push('logDepthBufFC');
 
 		}
+
+        if(parameters.enhancedLightMap) {
+            identifiers = identifiers.concat(["lm_Intensity", "lm_Center", "lm_Falloff"]);
+        }
 
 
 		for ( var u in uniforms ) {
