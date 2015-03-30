@@ -12,7 +12,8 @@
         vec3 modifier = - lm_Falloff * light * light + unit;
 
         // apply the lightmap
-        outgoingLight *= diffuseColor.xyz * light * modifier * lm_Intensity;
+        // TODO: Investigate why this needs to be an addition instead of multiplication now
+        outgoingLight += diffuseColor.xyz * light * modifier * lm_Intensity;
     #endif
 
 #endif

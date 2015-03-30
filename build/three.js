@@ -16933,7 +16933,7 @@ THREE.ShaderChunk[ 'map_vertex'] = "#if defined( USE_MAP ) || defined( USE_BUMPM
 
 // File:src/renderers/shaders/ShaderChunk/lightmap_fragment.glsl
 
-THREE.ShaderChunk[ 'lightmap_fragment'] = "#ifdef USE_LIGHTMAP\n\n    #ifndef USE_ENHANCED_LIGHTMAP\n        outgoingLight *= diffuseColor.xyz * texture2D( lightMap, vUv2 ).xyz;\n\n    #else\n        // compute the light value\n        vec3 unit = vec3(1.0);\n        vec3 light = 2.0 * (texture2D(lightMap, vUv2).xyz - lm_Center * unit);\n\n        // compute the light intensity modifier\n        vec3 modifier = - lm_Falloff * light * light + unit;\n\n        // apply the lightmap\n        outgoingLight *= diffuseColor.xyz * light * modifier * lm_Intensity;\n    #endif\n\n#endif\n";
+THREE.ShaderChunk[ 'lightmap_fragment'] = "#ifdef USE_LIGHTMAP\n\n    #ifndef USE_ENHANCED_LIGHTMAP\n        outgoingLight *= diffuseColor.xyz * texture2D( lightMap, vUv2 ).xyz;\n\n    #else\n        // compute the light value\n        vec3 unit = vec3(1.0);\n        vec3 light = 2.0 * (texture2D(lightMap, vUv2).xyz - lm_Center * unit);\n\n        // compute the light intensity modifier\n        vec3 modifier = - lm_Falloff * light * light + unit;\n\n        // apply the lightmap\n        // TODO: Investigate why this needs to be an addition instead of multiplication now\n        outgoingLight += diffuseColor.xyz * light * modifier * lm_Intensity;\n    #endif\n\n#endif\n";
 
 // File:src/renderers/shaders/ShaderChunk/shadowmap_pars_vertex.glsl
 
